@@ -9,9 +9,9 @@ _Date: 30 Oct 2024_
 
 **Research**: 
 
-To secure the Remote Desktop Connection we will require a **Point-to-Site VPN connection**. Other secure connections are possible too such as Express routes or site-to-site VPNs.
+It is possible to RDP to an Azure Windows VM if it has a public IP and allows inbound RDP connections from the internet at the OS level as well as the Network Security Group (NSG). However, opening RDP connections to the internet is not a security best practice. This method can be further locked down by allowing incoming RDP connections from certain IP addresses and using a non-standard RDP port instead of TCP port 3389.
 
-We will also use **Multi-Factor Authentication** as an added measure of security.
+For more security, we will use a **Point-to-Site VPN connection** for the Remote Desktop Connection. Other secure connections are possible too such as using Express routes or site-to-site VPNs. We will also use **Multi-Factor Authentication** as an added measure of security.
 
 This solution could be replaced by _Azure Virtual Desktops_ which would be a more robust solution, however there are times in the real world when we need a quick solution with existing resources. 
 

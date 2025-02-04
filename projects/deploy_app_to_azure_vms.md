@@ -1,6 +1,6 @@
 
 
-## Automate the deployment of applications to Azure Windows Virtual Machines
+## Deploy applications to Azure Windows Virtual Machines via automation
 _Date: 10 Oct 2024_
 
 **Aim**: To install applications on Windows VMs in Azure via scripts in the absence of any configuration management tools.   

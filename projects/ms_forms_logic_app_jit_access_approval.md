@@ -1,6 +1,6 @@
 
 
-## Automate JIT RDP Access and Approvals to Azure VMs with MS Forms and Azure Logic Apps  
+## Automate JIT RDP Access to Azure VMs with Approvals using MS Forms and Azure Logic Apps  
 _Date: 6 Dec 2024_
 
 **Scenario**: In this environment, end users often require RDP access to specific Azure VMs that are publicly available i.e. acting as bastion hosts. Moreover, the access requirement is temporary. 
