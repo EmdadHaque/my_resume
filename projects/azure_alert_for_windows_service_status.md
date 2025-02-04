@@ -65,9 +65,11 @@ However, Windows Client OS (such as Windows 8, 10 or 11) does not trigger the 70
 
 - On the VM(s), I have used Task Scheduler and created a task that runs every 5 mins to trigger a PowerShell script. 
 
-    - The script checks if the specified service is running and if not it logs a "Warning" level event in the Windows Application event log. The PS v5.1 script is shown below:
+    - The script checks if the specified service is running and if not it logs a "Warning" level event in the Windows Application event log. 
+    
+    The PS v5.1 script is shown below. It is monitoring the Print Spooler service status.
 
-    ```
+    ```powershell
     # Define the service name you want to monitor
     $serviceName = "Spooler"  # Display Name = Print Spooler
 
@@ -111,23 +113,42 @@ However, Windows Client OS (such as Windows 8, 10 or 11) does not trigger the 70
     }
     ```
 
-- To add MFA prompt for the RDP access, create a **Conditional Policy** that Grants access to Users for All Resources when the MFA Requirement is met. This will cover the RDP access to the VM and require MFA.
+    - To verify if the script is working, open _Services.msc_ on the VM and stop the service you are monitoring such as the _Print Spooler_ service. Next, run the script manually or trigger it from the Task Scheduler and then open the _Event Viewer_ > _Application_ log and verify if the service is logging a _Warning_ event.     
 
-- To RDP to the VM:
-    - Connect to the Azure VPN from your local device.
 
-    - Open Remote Desktop Connection app from your local device and from the Advanced tab, select _"Use a web account to sign in to the remote computer"_ 
-    ![](/assets/img/projects/rdp_entra_id/rdc_web_account.png)
+- Finally, from Azure Portal, search for "Alerts" and create an _Alert Rule_.
+
+    - For the _Scope_ page, select the VM(s) you are monitoring.
+
+    - For the _Condition_ page, select _Custom log search_ option for the _Signal Name_ and add the query below:
+
+    ```
+    Event
+    | where Computer has "<<your-computer-name>>"
+    | where Source has "ServiceMonitor"
+    | where EventLevel == 3
+    | where EventID == 1001 or EventID == 1002
+    | where TimeGenerated > ago(15m)
+    | order by TimeGenerated desc
+    ```
+
+    Under _Measurement_, enter:    
+        _Mesure_ = _Table Rows_,    
+        _Aggregation Type_:_Count_    
+        _Aggregation granularity_:_15 minutes_    
+        _Operator_ = _Greater than or equal to_    
+        _Threshold value_ = _2_    
+        _Frequency of evaluation_ = _15 minutes_
     
-    - Add the remote computer's FQDN (OS hostname plus the DNS Suffix)
-    
-    - Enter the username, password and MFA code when you the MS Entra ID modern authentication credential prompt. 
-    
-    - Select _Yes_ when prompted to _Allow remote desktop connection?_ 
-    ![](/assets/img/projects/rdp_entra_id/rdp_prompt.png) 
+    This will trigger the alert if 2 or more Warning events are registered in the previous 15-minute period. 
 
+    - For the _Actions_ page, select an existing Action Group or create a new one to send the notification. For example, I chose to send an email to myself.
 
-You should now be able to access the Azure VM via RDP using the Entra ID credentials and MFA over a VPN connection. Hope this was helpful.  
+    - For the _Details_ page, enter the Alert _Severity_, _Name_ and other details to create the Alert Rule.
+&nbsp;
+
+You should now start to receive an alert notification every 15 minute if the monitored service is not in a running state over 15 minutes.     
+Hope this was helpful.  
 
 &nbsp;
 
