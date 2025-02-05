@@ -5,28 +5,27 @@ _Date: 04 Feb 2025_
 
 **Requirement**: The IT team needs to be alerted when the Windows service is not running so that remediation efforts can be made as soon as it occurs.  
 
-**Research**: 
+**Summary**: 
 
-It is possible to create Alerts in Azure based off performance metrics and Windows Event Logs. The Alert can be used to trigger a notification using an Action Group. 
+It is possible to create Alerts in Azure based on performance metrics and Windows Event Logs. The Alert can be used to trigger a notification using an Action Group. 
 
-We can collect Event Logs from VMs using Data Collection Rules that employ Azure Monitoring Agent (AMA) installed on the VMs into a Log Analytics WorkSpace. Then, we create an alert based on a Custom Log Search query which can trigger a n alert notification to be sent.
+We can collect Event Logs from VMs using Data Collection Rules that employ Azure Monitoring Agent (AMA) installed on the VMs to send the logs to a Log Analytics WorkSpace. Then, we create an Alert based on a Custom Log Search query which can trigger an alert notification to be sent.
 
-In Windows Server OS, we can monitor events with the Event ID 7038 for services changing running state or Event ID 7000 if the service fails to start.  
-However, Windows Client OS (such as Windows 8, 10 or 11) does not trigger the 7038 events. To address this limitation, we can use a PowerShell script to monitor the Service state and log an event.
+In Windows Server OS, we can monitor events with the Event ID 7038 for services changing running state or Event ID 7000 if the service fails to start.However, Windows Client OSes (such as Windows 8, 10 or 11) do not trigger the 7038 events. To address this limitation, we can use a PowerShell script to monitor the Service state and log an event.
 &nbsp; 
 
 ---
 
 ### Steps:
 
-- From Azure Portal, search for "Log Analytics WorkSpace". Create a Log Analytics WorkSpace that will be the destination of the Windows event logs being collected.
+- From Azure Portal, search for **Log Analytics WorkSpace**. Create a Log Analytics WorkSpace that will be the destination of the Windows event logs that will be collected from the Windows VM(s).
 
-    ![](/assets/img/projects/vm_service_alert/_)
+&nbsp; 
 
 
-- From Azure Portal, search for "Data Collection Rule". Create a Data Collection Rule (DCR).  
+- From Azure Portal, search for **Data Collection Rule**. Create a Data Collection Rule (DCR) using the settings mentioned below.  
     
-    - Choose the _Windows_ option for the _Platform Type_
+    - For the _Platform Type_, choose the _Windows_ option.
     ![](/assets/img/projects/vm_service_alert/_)
 
     - For the _Resources_ page, add the VM(s) you wish to monitor the service and collect the event logs from.
@@ -34,12 +33,12 @@ However, Windows Client OS (such as Windows 8, 10 or 11) does not trigger the 70
     - For the _Data Sources_ page, click the _+ Add data source_ button and select _Windows Event Logs_ from the drop-down. Then, select the Event Log Types and Log Level. You can choose from here as it suits you or use an _XRPath filter_ under the _Custom_ option.
 
         I am choosing to collect only the _Warning_ level events from the _Application_ log as this is where our PowerShell script will log its findings.
-        ![](/assets/img/projects/vm_service_alert/_)
+        ![](/assets/img/projects/vm_service_alert/dcr_log_type.jpg)
 
     - For the _Destination_ prompt, select _Azure Monitor Logs_ for the _Destination Type_. Then, select the Log Analytics WorkSpace you created earlier and its correspong Subscription. 
     ![](/assets/img/projects/vm_service_alert/_)
 
-    - Creating the DCR will automatically prompt the Azure Monioring Agent (AMA) to be installed on the VMs specified under _Resources_.
+    - Creating the DCR will automatically prompt the **Azure Monioring Agent (AMA)** to be installed on the VMs specified under _Resources_ using VM Extensions.
 
     - To verify that the Monitoring Agent is operating correctly, go to your "Log Analytics WorkSpace" from the Azure Portal and select _Logs_ and run the KQL query below.
 
@@ -63,11 +62,21 @@ However, Windows Client OS (such as Windows 8, 10 or 11) does not trigger the 70
 
         You should be able to see events for the Event Log type and level you selected for the DCR.
 
-- On the VM(s), I have used Task Scheduler and created a task that runs every 5 mins to trigger a PowerShell script. 
+&nbsp;
 
-    - The script checks if the specified service is running and if not it logs a "Warning" level event in the Windows Application event log. 
+- On the VM(s), I have used **Task Scheduler** and created a task that runs every 5 mins to trigger a PowerShell script (code provided below). 
+    - For the _Trigger_, choose _On a schedule_ and _One time_ under settings provided the start time. 
     
-    The PS v5.1 script is shown below. It is monitoring the Print Spooler service status.
+        Under _Advanced settings_ check the option to _Repeat task every_ 5 minutes for a duration of _Indefinitely_ 
+    ![](/assets/img/projects/vm_service_alert/task_trigger.jpg)
+
+    - For the _Action_, choose _Start a program_. For _Program/Script_, type _powershell.exe_ and for Arguments type _-File "C:\path\to\PS-script.ps1"_
+
+&nbsp;
+
+- The **PowerShell script** checks if the specified service is running, and if not it logs a "Warning" level event in the Windows Application event log. 
+    
+    The PS v5.1 script is shown below. As an example, this is monitoring the Print Spooler service status.
 
     ```powershell
     # Define the service name you want to monitor
@@ -113,10 +122,13 @@ However, Windows Client OS (such as Windows 8, 10 or 11) does not trigger the 70
     }
     ```
 
-    - To verify if the script is working, open _Services.msc_ on the VM and stop the service you are monitoring such as the _Print Spooler_ service. Next, run the script manually or trigger it from the Task Scheduler and then open the _Event Viewer_ > _Application_ log and verify if the service is logging a _Warning_ event.     
+    - To verify if the script is working, open _Services.msc_ on the VM and stop the service you are monitoring such as the _Print Spooler_ service. 
+    
+        Next, run the script manually or trigger it from the Task Scheduler and then open the _Event Viewer_ > _Application_ log and verify if the service is logging a _Warning_ event.
 
+&nbsp;
 
-- Finally, from Azure Portal, search for "Alerts" and create an _Alert Rule_.
+- Finally, from Azure Portal, search for **Alerts** and create an _Alert Rule_.
 
     - For the _Scope_ page, select the VM(s) you are monitoring.
 
@@ -131,23 +143,28 @@ However, Windows Client OS (such as Windows 8, 10 or 11) does not trigger the 70
     | where TimeGenerated > ago(15m)
     | order by TimeGenerated desc
     ```
-
-    Under _Measurement_, enter:    
-        _Mesure_ = _Table Rows_,    
-        _Aggregation Type_:_Count_    
-        _Aggregation granularity_:_15 minutes_    
-        _Operator_ = _Greater than or equal to_    
-        _Threshold value_ = _2_    
-        _Frequency of evaluation_ = _15 minutes_
     
+    Under _Measurement_, enter:    
+    _Mesure_ = _Table Rows_,    
+    _Aggregation Type_:_Count_    
+    _Aggregation granularity_:_15 minutes_    
+    _Operator_ = _Greater than or equal to_    
+    _Threshold value_ = _2_    
+    _Frequency of evaluation_ = _15 minutes_  
+
     This will trigger the alert if 2 or more Warning events are registered in the previous 15-minute period. 
 
     - For the _Actions_ page, select an existing Action Group or create a new one to send the notification. For example, I chose to send an email to myself.
 
     - For the _Details_ page, enter the Alert _Severity_, _Name_ and other details to create the Alert Rule.
+
 &nbsp;
 
 You should now start to receive an alert notification every 15 minute if the monitored service is not in a running state over 15 minutes.     
+
+![](/assets/img/projects/vm_service_alert/vm_alerts.jpg)
+
+
 Hope this was helpful.  
 
 &nbsp;
