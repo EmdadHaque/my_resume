@@ -18,25 +18,21 @@ In Windows Server OS, we can monitor events with the Event ID 7038 for services 
 
 ### Steps:
 
-- From Azure Portal, search for **Log Analytics WorkSpace**. Create a Log Analytics WorkSpace that will be the destination of the Windows event logs that will be collected from the Windows VM(s).
-
+- From Azure Portal, search for **Log Analytics WorkSpace**. Create a Log Analytics WorkSpace that will be the destination of the Windows event logs that will be collected from the Windows VM(s).   
 &nbsp; 
-
-
 - From Azure Portal, search for **Data Collection Rule**. Create a Data Collection Rule (DCR) using the settings mentioned below.  
     
     - For the _Platform Type_, choose the _Windows_ option.
-    ![](/assets/img/projects/vm_service_alert/_)
 
     - For the _Resources_ page, add the VM(s) you wish to monitor the service and collect the event logs from.
 
     - For the _Data Sources_ page, click the _+ Add data source_ button and select _Windows Event Logs_ from the drop-down. Then, select the Event Log Types and Log Level. You can choose from here as it suits you or use an _XRPath filter_ under the _Custom_ option.
 
-        I am choosing to collect only the _Warning_ level events from the _Application_ log as this is where our PowerShell script will log its findings.
+        I am choosing to collect only the _Warning_ level events from the _Application_ log as this is where our PowerShell script will log its findings.     
+
         ![](/assets/img/projects/vm_service_alert/dcr_log_type.jpg)
 
     - For the _Destination_ prompt, select _Azure Monitor Logs_ for the _Destination Type_. Then, select the Log Analytics WorkSpace you created earlier and its correspong Subscription. 
-    ![](/assets/img/projects/vm_service_alert/_)
 
     - Creating the DCR will automatically prompt the **Azure Monioring Agent (AMA)** to be installed on the VMs specified under _Resources_ using VM Extensions.
 
@@ -67,8 +63,9 @@ In Windows Server OS, we can monitor events with the Event ID 7038 for services 
 - On the VM(s), I have used **Task Scheduler** and created a task that runs every 5 mins to trigger a PowerShell script (code provided below). 
     - For the _Trigger_, choose _On a schedule_ and _One time_ under settings provided the start time. 
     
-        Under _Advanced settings_ check the option to _Repeat task every_ 5 minutes for a duration of _Indefinitely_ 
-    ![](/assets/img/projects/vm_service_alert/task_trigger.jpg)
+        Under _Advanced settings_ check the option to _Repeat task every_ 5 minutes for a duration of _Indefinitely_      
+
+        ![](/assets/img/projects/vm_service_alert/task_trigger.jpg)
 
     - For the _Action_, choose _Start a program_. For _Program/Script_, type _powershell.exe_ and for Arguments type _-File "C:\path\to\PS-script.ps1"_
 
