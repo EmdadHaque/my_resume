@@ -67,7 +67,7 @@ In Windows Server OS, we can monitor events with the Event ID 7038 for services 
 
         ![](/assets/img/projects/vm_service_alert/task_trigger.jpg)
 
-    - For the _Action_, choose _Start a program_. For _Program/Script_, type _powershell.exe_ and for Arguments type _-File "C:\path\to\PS-script.ps1"_
+    - For the _Action_, choose _Start a program_. For _Program/Script_, type _powershell.exe_ and for _Arguments_ type _-File "C:\path\to\PS-script.ps1"_
 
 &nbsp;
 
